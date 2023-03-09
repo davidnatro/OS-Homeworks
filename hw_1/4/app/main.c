@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -8,7 +9,7 @@ void closeFd(int fd[]);
 
 void hasCorrectNumberOfArguments(int argc);
 
-void stringReverse(int start, int end, int size, char *data);
+void stringReverse(int start, int end, ssize_t size, char *data);
 
 int main(int argc, char **argv) {
     hasCorrectNumberOfArguments(argc);
@@ -19,21 +20,14 @@ int main(int argc, char **argv) {
 
     int fd_file;
     if ((fd_file = open(argv[3], O_RDONLY)) < 0) {
-        printf("%s", "Не удается открыть файл!");
+        printf("%s", "Не удается открыть файл для чтения!");
         exit(-1);
     }
-    read(fd_file, input_data, 0);
-    FILE *input_file = fopen(argv[3], "r");
-    fseek(input_file, 0, SEEK_END);
-    int input_size = ftell(input_file);
-    fseek(input_file, 0, SEEK_SET);
-
-    input_data = malloc(input_size);
-    buffer = malloc(input_size);
-
-    fread(input_data, 1, input_size, input_file);
-    fclose(input_file);
-
+    ssize_t input_size = read(fd_file, input_data, str_max_size);
+    if (close(fd_file) < 0) {
+        printf("%s", "Не удается закрыть файл!");
+        exit(-1);
+    }
 
     int fd[2], pipe_result, fork_result;
 
@@ -54,8 +48,45 @@ int main(int argc, char **argv) {
             printf("%s", "Не удается завершить прочитать из канала!");
             exit(-1);
         }
+
         stringReverse(atoi(argv[1]), atoi(argv[2]), input_size, buffer);
 
+        closeFd(fd);
+        pipe_result = pipe(fd);
+        if (pipe_result < 0) {
+            printf("%s", "Не удается создать канал!");
+            exit(-1);
+        }
+
+        ssize_t write_size = write(fd[1], buffer, input_size);
+        if (write_size != input_size) {
+            printf("%s", "Не удается завершить запись в канал!");
+            exit(-1);
+        }
+
+        fork_result = fork();
+        if (fork_result == 0) {
+            char *new_str = malloc(input_size);
+            ssize_t read_size = read(fd[0], new_str, input_size);
+            if (read_size != input_size) {
+                printf("%s", "Не удается завершить прочитать из канала!");
+                exit(-1);
+            }
+            if ((fd_file = open(argv[4], O_WRONLY | O_CREAT, S_IWOTH | S_IWUSR)) < 0) {
+                printf("%s", "Не удается открыть файл для записи!");
+                exit(-1);
+            }
+            ssize_t write_size = write(fd_file, new_str, input_size);
+            if (write_size != input_size) {
+                printf("%s", "Не удается завершить запись в файл!");
+                exit(-1);
+            }
+            if (close(fd_file) < 0) {
+                printf("%s", "Не удается закрыть файл");
+                exit(-1);
+            }
+            free(new_str);
+        }
     } else {
         ssize_t write_size = write(fd[1], input_data, input_size);
         if (write_size != input_size) {
@@ -63,6 +94,8 @@ int main(int argc, char **argv) {
             exit(-1);
         }
     }
+
+    while (wait(NULL) > 0) {}
 
     closeFd(fd);
     free(input_data);
@@ -90,7 +123,7 @@ void hasCorrectNumberOfArguments(const int argc) {
     }
 }
 
-void stringReverse(const int start, const int end, const int size, char *data) {
+void stringReverse(const int start, const int end, const ssize_t size, char *data) {
     int n = end - start;
     for (int i = 0; i < n / 2; i++) {
         char temp = data[n - i - 1 + start];
