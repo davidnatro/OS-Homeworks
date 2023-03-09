@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
                 printf("%s", "Не удается завершить прочитать из канала!");
                 exit(-1);
             }
-            if ((fd_file = open(argv[4], O_WRONLY | O_CREAT, S_IWOTH | S_IWUSR)) < 0) {
+            if ((fd_file = open(argv[4], O_WRONLY | O_CREAT, S_IWOTH | S_IWUSR | 0644)) < 0) {
                 printf("%s", "Не удается открыть файл для записи!");
                 exit(-1);
             }
