@@ -22,8 +22,13 @@ int main(int argc, char *argv[]) {
     int end_pos = atoi(argv[2]);
 
     // Создаем неименованной канал
-    int fd[2];
+    int fd[2], fd2[2];
     if (pipe(fd) == -1) {
+        perror("Не удается создать канал!");
+        exit(-1);
+    }
+
+    if(pipe(fd2) == -1) {
         perror("Не удается создать канал!");
         exit(-1);
     }
@@ -38,15 +43,16 @@ int main(int argc, char *argv[]) {
     if (pid == 0) {
         char buffer[BUFFER_SIZE];
         ssize_t total_read = read(fd[0], buffer, BUFFER_SIZE);
-
-        // Закрываем конец чтения из неименованного канала
         close(fd[0]);
 
         stringReverse(start_pos, end_pos, total_read, buffer);
 
-        ssize_t total_written = write(fd[1], buffer, total_read);
+        if (pipe(fd) == -1) {
+            perror("Не удается создать канал!");
+            exit(-1);
+        }
 
-        close(fd[1]);
+        ssize_t total_written = write(fd2[1], buffer, total_read);
     } else {
         int input_fd = open(input_file, O_RDONLY);
         if (input_fd == -1) {
@@ -54,28 +60,28 @@ int main(int argc, char *argv[]) {
             exit(-1);
         }
 
-        int output_fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        int output_fd = open(output_file, O_WRONLY | O_CREAT, 0666);
         if (output_fd == -1) {
             perror("Не удается открыть файл для записи!");
             exit(-1);
         }
 
         char buffer[BUFFER_SIZE];
-        ssize_t total_read = 0;
-        ssize_t total_written = 0;
 
-        while ((total_read = read(input_fd, buffer, BUFFER_SIZE)) > 0) {
-            total_written = write(fd[1], buffer, total_read);
-        }
+        ssize_t total_read = read(input_fd, buffer, BUFFER_SIZE);
 
-        // Закрываем конец записи в неименованный канал
+        ssize_t total_written = write(fd[1], buffer, total_read);
+
         close(fd[1]);
 
-        while ((total_read = read(fd[0], buffer, BUFFER_SIZE)) > 0) {
-            total_written = write(output_fd, buffer, total_read);
-        }
+        total_read = read(fd2[0], buffer, total_read);
 
-        close(fd[0]);
+
+        total_written = write(output_fd, buffer, total_read);
+
+
+        close(fd2[0]);
+        close(fd2[1]);
         close(input_fd);
         close(output_fd);
     }
