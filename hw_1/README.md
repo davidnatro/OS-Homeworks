@@ -7,7 +7,7 @@
 * Email: dnatroshvili@edu.hse.ru
 * Telegram: @davidnatro
 
-#
+#### Выполнено на:
 - [4 бала](4/)
 - [5 балов](5/)
 - [6 балов](6/)
