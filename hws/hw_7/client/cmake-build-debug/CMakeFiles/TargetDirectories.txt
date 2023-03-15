@@ -1,0 +1,3 @@
+/Users/davidnatroshvili/Desktop/OS_Homeworks/hws/hw_7/client/cmake-build-debug/CMakeFiles/client.dir
+/Users/davidnatroshvili/Desktop/OS_Homeworks/hws/hw_7/client/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/davidnatroshvili/Desktop/OS_Homeworks/hws/hw_7/client/cmake-build-debug/CMakeFiles/rebuild_cache.dir
