@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     pid1 = fork();
     if (pid1 != 0) {
         // Процесс 1: чтение данных из входного файла и передача их через именованный канал
-        int input_fd = open(argv[1], O_RDONLY);
+        int input_fd = open(argv[3], O_RDONLY);
         if (input_fd < 0) {
             printf("Unable to open input file\n");
             return -1;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
             pid_t pid3 = fork();
             if (pid3 == 0) {
-                int output_fd = open(argv[2], O_WRONLY | O_CREAT, 0666);
+                int output_fd = open(argv[4], O_WRONLY | O_CREAT, 0666);
                 if (output_fd < 0) {
                     printf("Unable to open input file\n");
                     return -1;
