@@ -1,11 +1,11 @@
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-#include <semaphore.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
 
 typedef struct {
     int pin;
@@ -101,7 +101,8 @@ int main() {
     shared_mem->in = shared_mem->out = 0;
 
     sem_init(&shared_mem2->mutex, 1, 1);
-    sem_init(&shared_mem2->empty, 1, BUFFER_SIZE);
+    sem_init(&shared_mem2->empty, 1,
+             BUFFER_SIZE);
     sem_init(&shared_mem2->full, 1, 0);
     shared_mem2->in = shared_mem2->out = 0;
 
