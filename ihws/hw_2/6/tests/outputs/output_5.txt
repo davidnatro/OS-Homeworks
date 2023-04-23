@@ -1,1 +1,0 @@
-Ano perational system is a term used in data warehousing to refer to a system that is used to process the day-to-day transactions of an organization. These systems are designed in a manner that processing of day-to-day transactions is performed efficiently and the integrity of the transactional data is preserved.

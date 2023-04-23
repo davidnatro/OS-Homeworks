@@ -1,119 +1,97 @@
-#include <fcntl.h>
-#include <semaphore.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
-
-#define SHARED_MEMORY_SIZE sizeof(Pin)
+#include <time.h>
+#include <semaphore.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 typedef struct {
     int pin;
     int is_curved;
-    int is_sharpened;
-    int is_quality_checked;
 } Pin;
 
-volatile sig_atomic_t terminate = 0;
+#define BUFFER_SIZE 5
 
-void sigint_handler(int sig) {
-    terminate = 1;
+typedef struct {
+    Pin buffer[BUFFER_SIZE];
+    int in, out;
+    sem_t mutex, empty, full;
+} SharedMemory;
+
+void produce(SharedMemory *shared_mem) {
+    Pin pin;
+    pin.pin = rand() % 1000;
+    pin.is_curved = rand() % 2;
+
+    sem_wait(&shared_mem->empty);
+    sem_wait(&shared_mem->mutex);
+
+    shared_mem->buffer[shared_mem->in] = pin;
+    shared_mem->in = (shared_mem->in + 1) % BUFFER_SIZE;
+
+    sem_post(&shared_mem->mutex);
+    sem_post(&shared_mem->full);
 }
 
-void produce(Pin *pin) {
-    pin->pin = rand() % 1000;
-    pin->is_curved = rand() % 2;
-    pin->is_sharpened = 0;
-    pin->is_quality_checked = 0;
-}
+void check_and_sharpen(SharedMemory *shared_mem) {
+    Pin pin;
 
-void check_curvature(sem_t *sem_produce, sem_t *sem_check, Pin *shared_memory) {
-    while (!terminate) {
-        sem_wait(sem_produce);
-        if (terminate) break;
-        produce(shared_memory);
-        sem_post(sem_check);
-        usleep(rand() % 100000);
+    sem_wait(&shared_mem->full);
+    sem_wait(&shared_mem->mutex);
+
+    pin = shared_mem->buffer[shared_mem->out];
+    if (!pin.is_curved) {
+        printf("Sharpening pin %d\n", pin.pin);
+    } else {
+        printf("Discarding pin %d\n", pin.pin);
     }
-}
 
-void sharpen(sem_t *sem_check, sem_t *sem_sharpen, Pin *shared_memory) {
-    while (!terminate) {
-        sem_wait(sem_check);
-        if (terminate) break;
-        if (!shared_memory->is_curved) {
-            shared_memory->is_sharpened = 1;
-            sem_post(sem_sharpen);
-        }
-        usleep(rand() % 100000);
-    }
-}
+    shared_mem->out = (shared_mem->out + 1) % BUFFER_SIZE;
 
-void quality_check(sem_t *sem_sharpen, sem_t *sem_produce, Pin *shared_memory) {
-    while (!terminate) {
-        sem_wait(sem_sharpen);
-        if (terminate) break;
-        if (shared_memory->is_sharpened) {
-            shared_memory->is_quality_checked = 1;
-            printf("Pin %d passed quality check and is ready for packaging\n", shared_memory->pin);
-        } else {
-            printf("Pin %d failed quality check\n", shared_memory->pin);
-        }
-        sem_post(sem_produce);
-        usleep(rand() % 100000);
-    }
+    sem_post(&shared_mem->mutex);
+    sem_post(&shared_mem->empty);
 }
 
 int main() {
     srand(time(NULL));
-    sem_t *sem_produce = sem_open("sem_produce", O_CREAT, 0644, 1);
-    sem_t *sem_check = sem_open("sem_check", O_CREAT, 0644, 0);
-    sem_t *sem_sharpen = sem_open("sem_sharpen", O_CREAT, 0644, 0);
 
-    int shm_fd = shm_open("shared_memory", O_CREAT | O_RDWR, 0644);
-    ftruncate(shm_fd, SHARED_MEMORY_SIZE);
-    Pin *shared_memory = (Pin *) mmap(0, SHARED_MEMORY_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    SharedMemory *shared_mem;
+    int shm_fd;
 
-    signal(SIGINT, sigint_handler);
+    shm_fd = shm_open("/pins_shm", O_CREAT | O_RDWR, 0666);
+    ftruncate(shm_fd, sizeof(SharedMemory));
+    shared_mem = (SharedMemory *)mmap(NULL, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
-    pid_t pids[3];
-    pids[0] = fork();
-    if (pids[0] == 0) {
-        check_curvature(sem_produce, sem_check, shared_memory);
+    sem_init(&shared_mem->mutex, 1, 1);
+    sem_init(&shared_mem->empty, 1, BUFFER_SIZE);
+    sem_init(&shared_mem->full, 1, 0);
+    shared_mem->in = shared_mem->out = 0;
+
+    pid_t pid = fork();
+
+    if (pid == 0) { // Child process
+        for (int i = 0; i < 20; ++i) {
+            check_and_sharpen(shared_mem);
+            sleep(rand() % 3);
+        }
         exit(0);
+    } else { // Parent process
+        for (int i = 0; i < 20; ++i) {
+            produce(shared_mem);
+            sleep(rand() % 3);
+        }
+        wait(NULL);
     }
 
-    pids[1] = fork();
-    if (pids[1] == 0) {
-        sharpen(sem_check, sem_sharpen, shared_memory);
-        exit(0);
-    }
+    sem_destroy(&shared_mem->mutex);
+    sem_destroy(&shared_mem->empty);
+    sem_destroy(&shared_mem->full);
 
-    pids[2] = fork();
-    if (pids[2] == 0) {
-        quality_check(sem_sharpen, sem_produce, shared_memory);
-        exit(0);
-    }
-
-    for (int i = 0; i < 3; i++) {
-        waitpid(pids[i], NULL, 0);
-    }
-
-    sem_close(sem_produce);
-    sem_close(sem_check);
-    sem_close(sem_sharpen);
-
-    sem_unlink("sem_produce");
-    sem_unlink("sem_check");
-    sem_unlink("sem_sharpen");
-
-    munmap(shared_memory, SHARED_MEMORY_SIZE);
-    close(shm_fd);
-    shm_unlink("shared_memory");
+    munmap(shared_mem, sizeof(SharedMemory));
+    shm_unlink("/pins_shm");
 
     return 0;
 }
