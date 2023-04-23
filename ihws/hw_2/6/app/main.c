@@ -16,6 +16,11 @@ typedef struct {
     int out;
 } SharedMemory;
 
+union semun {
+    int val;
+    struct semid_ds *buf;
+    unsigned short *array;
+};
 
 void produce(SharedMemory *shared_mem, int sem_id) {
     int item = rand() % 100;
