@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <semaphore.h>
-#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -92,14 +91,9 @@ int main() {
     srand(time(NULL));
 
     SharedMemory *shared_mem, *shared_mem2;
-    int shm_fd, shm_fd2;
 
-    shm_fd = shm_open("/pins_shm", O_CREAT | O_RDWR, 0666);
-    shm_fd2 = shm_open("/pins_shm2", O_CREAT | O_RDWR, 0666);
-    ftruncate(shm_fd, sizeof(SharedMemory));
-    ftruncate(shm_fd2, sizeof(SharedMemory));
-    shared_mem = (SharedMemory *) mmap(NULL, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    shared_mem2 = (SharedMemory *) mmap(NULL, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd2, 0);
+    shared_mem = mmap(NULL, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    shared_mem2 = mmap(NULL, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     sem_init(&shared_mem->mutex, 1, 1);
     sem_init(&shared_mem->empty, 1, BUFFER_SIZE);
@@ -149,8 +143,6 @@ int main() {
 
     munmap(shared_mem, sizeof(SharedMemory));
     munmap(shared_mem2, sizeof(SharedMemory));
-    shm_unlink("/pins_shm");
-    shm_unlink("/pins_shm2");
 
     return 0;
 }
