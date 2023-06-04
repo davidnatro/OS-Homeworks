@@ -1,0 +1,3 @@
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/ihws/hw_4/broker/cmake-build-debug/CMakeFiles/broker.dir
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/ihws/hw_4/broker/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/ihws/hw_4/broker/cmake-build-debug/CMakeFiles/rebuild_cache.dir
