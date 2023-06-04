@@ -1,0 +1,3 @@
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/hws/hw_10/sender/cmake-build-debug/CMakeFiles/sender.dir
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/hws/hw_10/sender/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/hws/hw_10/sender/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,3 @@
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/hws/hw_9/cmake-build-debug/CMakeFiles/hw_9.dir
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/hws/hw_9/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/davidnatroshvili/CLionProjects/OS_Homeworks/hws/hw_9/cmake-build-debug/CMakeFiles/rebuild_cache.dir
