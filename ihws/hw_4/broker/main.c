@@ -11,7 +11,7 @@ typedef struct {
   int bent;
 } Bulavka;
 
-void die(const char *error_message) {
+void err(const char *error_message) {
   perror(error_message);
   exit(1);
 }
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   char buffer[sizeof(Bulavka)];
 
   if ((server_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-    die("Socket creation failed");
+    err("Socket creation failed");
   }
 
   memset(&server_address, 0, sizeof(server_address));
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
   server_address.sin_port = htons(port);
 
   if (bind(server_socket, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
-    die("Bind failed");
+    err("Bind failed");
   }
 
   printf("Listening on port %d\n", port);
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in forward_address;
 
   if ((forward_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-    die("Forward socket creation failed");
+    err("Forward socket creation failed");
   }
 
   memset(&forward_address, 0, sizeof(forward_address));
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
   while (1) {
     ssize_t recv_len = recvfrom(server_socket, buffer, sizeof(Bulavka), 0, (struct sockaddr *)&server_address, &addr_len);
     if (recv_len == -1) {
-      die("Receive failed");
+      err("Receive failed");
     }
 
     memcpy(&b, buffer, sizeof(Bulavka));

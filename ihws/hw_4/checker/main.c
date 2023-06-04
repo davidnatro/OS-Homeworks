@@ -13,7 +13,7 @@ typedef struct {
   int bent;
 } Bulavka;
 
-void die(const char *error_message) {
+void err(const char *error_message) {
   perror(error_message);
   exit(1);
 }
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
   Bulavka b;
 
   if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-    die("Socket creation error");
+    err("Socket creation error");
   }
 
   memset(&server_address, 0, sizeof(server_address));
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     } else {
       printf("Bulavka is sent to broker\n");
       if (sendto(sock, &b, sizeof(b), 0, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
-        die("Sendto failed");
+        err("Sendto failed");
       }
     }
     sleep(3);
