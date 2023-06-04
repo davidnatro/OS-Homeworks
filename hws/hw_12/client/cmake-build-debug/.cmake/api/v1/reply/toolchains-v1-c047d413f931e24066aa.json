@@ -33,50 +33,6 @@
 				"c",
 				"m"
 			]
-		},
-		{
-			"compiler" : 
-			{
-				"id" : "Clang",
-				"implicit" : 
-				{
-					"includeDirectories" : 
-					[
-						"/opt/homebrew/opt/llvm/include/c++/v1",
-						"/opt/homebrew/Cellar/llvm/16.0.4/lib/clang/16/include",
-						"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk/usr/include"
-					],
-					"linkDirectories" : 
-					[
-						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk/usr/lib"
-					],
-					"linkFrameworkDirectories" : 
-					[
-						"/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk/System/Library/Frameworks"
-					],
-					"linkLibraries" : 
-					[
-						"c++"
-					]
-				},
-				"path" : "/opt/homebrew/opt/llvm/bin/clang++",
-				"version" : "16.0.4"
-			},
-			"language" : "CXX",
-			"sourceFileExtensions" : 
-			[
-				"C",
-				"M",
-				"c++",
-				"cc",
-				"cpp",
-				"cxx",
-				"mm",
-				"mpp",
-				"CPP",
-				"ixx",
-				"cppm"
-			]
 		}
 	],
 	"version" : 
